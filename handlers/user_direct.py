@@ -14,8 +14,8 @@ from keyboards.topic_choose_kbds import choose_topic_kbd, make_catalogue, topic_
     last_check_kbd, settings_kbd
 from keyboards.user_kbds import start_kbd, make_event_catalogue, event_book_kbd, event_unbook_kbd, back_kbd
 from keyboards.adm_kbds import admin_main_menu_kbd
-from models import create_topic_list, change_user_subscription, get_topic_by_title, check_subscription, check_booking, \
-    check_registration, register_user, register_answers, change_subscription_time, cancel_subscription, events_titles, \
+from models import create_topic_list, change_user_subscription, get_topic_by_title, check_booking, \
+    check_registration, register_user, register_answers, change_subscription_time, cancel_subscription, \
     get_event, add_booking, delete_booking, get_user_time_topic
 from state.user_states import TopicChoose, Registration, BookingEvent
 
@@ -119,7 +119,7 @@ async def choose_topic(message: types.Message, state: FSMContext):
     await state.set_state(TopicChoose.menu)
 
 
-# В клавиатуру добавил кнопку назад потому что по какой-то причине клавиатура с одной кнопкой не отображается на ападе
+#В клавиатуру добавил кнопку отлично потому что по какой-то причине клавиатура с одной кнопкой не отображается на айпаде
 # переход в каталог тем из меню и по кнопке назад из выбранной темы
 @user_direct_router.message(StateFilter(TopicChoose.menu), F.text.lower() == "каталог тем")
 @user_direct_router.message(StateFilter(TopicChoose.topic), (F.text.lower() == "назад") | (F.text.lower() == "отлично"))

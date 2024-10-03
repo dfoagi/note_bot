@@ -1,4 +1,3 @@
-import asyncio
 import os
 from sqlalchemy import create_engine, Time, select, extract, ForeignKey, delete
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session, relationship
@@ -7,8 +6,6 @@ from dotenv import load_dotenv
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import FSInputFile
-
-from keyboards.adm_kbds import choose_part_kbd
 
 
 class Base(DeclarativeBase):
@@ -109,17 +106,8 @@ engine = create_engine(engine_url, echo=False)
 bot: Bot = Bot(token=API_TOKEN)
 
 
-# Создать все таблички
+# Создать таблички
 # Base.metadata.create_all(engine)
-
-# Добавить пользователя
-# with Session(engine) as session:
-#     paul = User(
-#         tg_id=592386558,
-#         time=datetime.now()
-#     )
-#     session.add(paul)
-#     session.commit()
 
 
 def create_topic_list() -> list:
@@ -130,15 +118,9 @@ def create_topic_list() -> list:
 
 def create_events_list() -> list:
     with Session(engine) as session:
-        # todo: в условии изменить время, в которое перестает показываться мероприятие
+        # todo: в условии изменить время, в которое перестает показываться мероприятие (за 5/10/15 минут до начала)
         stmt = select(Event).where(Event.date > datetime.now())
         return list(session.scalars(stmt))
-
-
-def events_titles() -> set:
-    with Session(engine) as session:
-        stmt = select(Event.title)
-        return set(session.scalars(stmt))
 
 
 def get_user_list() -> list:
@@ -413,7 +395,7 @@ async def async_send_cards():
             progress.card_number += 1
             if progress.card_number == topic.last_number:
                 await bot.send_message(chat_id=user.tg_id,
-                                       text='Это была последняя картинка по данной теме. Поздравляю с прохождением\n\n'
+                                       text='Это была последняя картинка по данной теме. Поздравляем с прохождением\n\n'
                                             'Выбрать новую тему можно в каталоге тем')
                 progress.card_number = 0
                 user.cur_subscription = 0
