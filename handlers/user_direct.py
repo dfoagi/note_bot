@@ -263,7 +263,7 @@ async def event_about(message: types.Message, state: FSMContext):
         event_title, event_date = message.text.split('\n')
         event = get_event(event_title, event_date)
         if event:
-            await state.update_data(event_id=event.id)
+            await state.update_data(event_id=event.id, event_title=event.title)
             if check_booking(message.from_user.id, event.id):
                 await message.answer(f"Вы записаны на событие {event.title}", reply_markup=event_unbook_kbd)
             else:
@@ -276,6 +276,9 @@ async def event_about(message: types.Message, state: FSMContext):
 async def book_event(message: types.Message, state: FSMContext):
     data = await state.get_data()
     add_booking(data['event_id'], message.from_user.id)
+    await bot.send_message(chat_id=273537230,
+                           text=f"Пользователь @{message.from_user.username} "
+                                f"записался на мероприятие {data['event_title']}")
     await message.answer("Вы записались на мероприятие")
     await events_list(message, state)
 
@@ -284,6 +287,9 @@ async def book_event(message: types.Message, state: FSMContext):
 async def cancel_booking(message: types.Message, state: FSMContext):
     data = await state.get_data()
     delete_booking(data['event_id'], message.from_user.id)
+    await bot.send_message(chat_id=273537230,
+                           text=f"Пользователь @{message.from_user.username} "
+                                f"отписался от мероприятия {data['event_title']}")
     await message.answer("Вы отписались от мероприятия")
     await cancel(message, state)
 
@@ -302,6 +308,7 @@ async def admin_cancel(message: types.Message, state: FSMContext):
     await state.clear()
 
 
+#подумать над фильтром, который будет проверять регистрацию
 @user_direct_router.message(Command("main_menu"))
 @user_direct_router.message(F.text.lower() == "главное меню")
 @user_direct_router.message(StateFilter(None), F.text)  # Чтобы при нажатии на любую кнопку при перезагрузке бота открывалось меню

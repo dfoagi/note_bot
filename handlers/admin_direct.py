@@ -152,6 +152,7 @@ async def add_time(message: types.Message, state: FSMContext):
         await state.set_state(CreateEvent.time)
 
 
+#Считываем время, если все нормально - показываем как будет выглядеть мероприятие
 @admin_direct_router.message(StateFilter(CreateEvent.time), F.text)
 async def final(message: types.Message, state: FSMContext):
     try:

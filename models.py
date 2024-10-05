@@ -1,4 +1,5 @@
 import os
+import logging
 from sqlalchemy import create_engine, Time, select, extract, ForeignKey, delete
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session, relationship
 from datetime import datetime, time
@@ -98,6 +99,7 @@ class UsersAnswers(Base):
 
 
 load_dotenv()
+logger = logging.getLogger("Logger")
 engine_url = os.getenv('DB_URL')
 API_TOKEN = os.getenv('TOKEN')
 admin = os.getenv('MAIN_ADMIN')
@@ -377,7 +379,7 @@ async def async_send_cards():
             card: Card = session.scalars(
                 select(Card).where(Card.topic == user.cur_subscription).where(
                     Card.position == progress.card_number + 1)).first()
-            print(card.url)
+            logger.info(card.url)
             if card.url is None:
                 msg = await bot.send_photo(
                     chat_id=user.tg_id,
