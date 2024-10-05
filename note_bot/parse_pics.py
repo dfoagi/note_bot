@@ -5,12 +5,12 @@ from note_bot.models import add_card, add_topic, get_topics_ids
 def parse_topics():
     have = get_topics_ids()
     print(have)
-    for root, dirs, files in os.walk("kits"):
-        if root == 'kits' or int(root.split('\\')[-1]) in have:
-            if root != 'kits':
+    for root, dirs, files in os.walk("static"):
+        if root == 'static' or int(root.split('\\')[-1]) in have:
+            if root != 'static':
                 print("тема", int(root.split('\\')[-1]), "уже есть в таблице")
             else:
-                print('kits')
+                print('static')
             continue
         topic_id = int(root.split('\\')[-1])
         pics_paths = {}
