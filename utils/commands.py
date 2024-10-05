@@ -9,7 +9,7 @@ async def set_commands(bot: Bot):
             description='Перейти в главное меню'
         ),
         BotCommand(
-            command='about',
+            command='help',
             description='Прочитать описание'
         )]
     await bot.set_my_commands(commands, BotCommandScopeAllPrivateChats())
