@@ -7,10 +7,10 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums.parse_mode import ParseMode
 from dotenv import load_dotenv
 
-from utils.commands import set_commands
-from handlers.user_direct import user_direct_router
-from handlers.admin_direct import admin_direct_router
-from apsched.job_scheduler import scheduler_start
+from note_bot.utils.commands import set_commands
+from note_bot.handlers.user_direct import user_direct_router
+from note_bot.handlers.admin_direct import admin_direct_router
+from note_bot.apsched.job_scheduler import scheduler_start
 
 load_dotenv()
 
