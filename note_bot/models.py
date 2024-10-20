@@ -1,3 +1,4 @@
+import asyncio
 import os
 import logging
 from sqlalchemy import create_engine, Time, select, extract, ForeignKey, delete
@@ -54,11 +55,13 @@ class Topic(Base):
     description: Mapped[str]
     last_number: Mapped[int]
 
+    # cards: Mapped[List["Card"]] = relationship(back_populates="topic")
+
 
 class Card(Base):
     __tablename__ = "cards"
 
-    topic: Mapped[int] = mapped_column(primary_key=True)
+    topic: Mapped[int] = mapped_column(ForeignKey("topics.id", ondelete="CASCADE"), primary_key=True)
     position: Mapped[int] = mapped_column(primary_key=True)
     path: Mapped[str]
     description: Mapped[str]
@@ -103,6 +106,7 @@ logger = logging.getLogger("Logger")
 engine_url = os.getenv('DB_URL')
 API_TOKEN = os.getenv('TOKEN')
 admin = os.getenv('MAIN_ADMIN')
+rate_limit = int(os.getenv('RATE_LIMIT'))
 
 engine = create_engine(engine_url, echo=False)
 bot: Bot = Bot(token=API_TOKEN)
@@ -179,6 +183,7 @@ async def send_announcement(text: str, image):
                 await bot.send_message(
                     chat_id=user,
                     text=text)
+            await asyncio.sleep(1 / rate_limit)     # Чтобы не отправлялось больше *rate_limit* сообщений в секунду
         except TelegramBadRequest:
             await bot.send_message(chat_id=admin, text=f'У этого id: {user} ошибка')
 
@@ -395,6 +400,7 @@ async def async_send_cards():
                 )
             user.last_pic_day = datetime.now()
             progress.card_number += 1
+            await asyncio.sleep(1 / rate_limit)
             if progress.card_number == topic.last_number:
                 await bot.send_message(chat_id=user.tg_id,
                                        text='Это была последняя картинка по данной теме. Поздравляем с прохождением\n\n'
