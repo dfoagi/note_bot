@@ -371,12 +371,12 @@ def change_card(topic_id, card_number, new_img, new_desc):
 
 async def async_send_cards():
     with Session(engine) as session:
-        # stmt = select(User).where(User.cur_subscription > 0).where(extract('HOUR', User.time) == datetime.now().hour). \
-        #     where(extract('MINUTE', User.time) == datetime.now().minute)
-        users = session.scalars(select(User).where(User.cur_subscription > 0))
+        stmt = select(User).where(User.cur_subscription > 0).where(extract('HOUR', User.time) == datetime.now().hour). \
+            where(extract('MINUTE', User.time) == datetime.now().minute)
+        users = session.scalars(stmt)
         for user in users:
-            # if user.last_pic_day and user.last_pic_day.day == datetime.now().day:
-            #     continue
+            if user.last_pic_day and user.last_pic_day.day == datetime.now().day:
+                continue
             progress: Progress = session.scalars(
                 select(Progress).where(Progress.user_id == user.tg_id).where(Progress.topic_id == user.cur_subscription)
             ).first()
