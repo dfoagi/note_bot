@@ -148,11 +148,7 @@ async def add_date(message: types.Message, state: FSMContext):
 async def add_time(message: types.Message, state: FSMContext):
     if message.text.lower() != "назад":
         try:
-            ''' Не использовал strptime, т.к. она в конце дает дату вида гг.мм.дд. чч.мм.сс
-            потом неудобно и некрасиво смотреть '''
             event_date = datetime.strptime(message.text, '%d.%m.%y')
-            # day, month, year = map(int, message.text.split('.'))
-            # await state.update_data(date=date(year, month, day))
             await state.update_data(date=event_date)
         except ValueError:
             await message.answer("Неверный формат! \nНапиши дату в формате ДД.ММ.ГГ")
@@ -233,11 +229,11 @@ async def choose_part(message: types.Message, state: FSMContext):
     topic = await state.get_data()
     try:
         if int(message.text) <= 0 or int(message.text) > topic['topic_last_num']:
-            raise WrongLastNumber
+            raise WrongLastNumber(message.text)
     except ValueError:
         await message.answer("Напиши число!")
-    except WrongLastNumber:
-        await message.answer("Нет карточки с таким номером")
+    except WrongLastNumber(message.text):
+        await message.answer("Номер карточки не попал в указанный выше промежуток")
     else:
         card = await send_chosen_card(message.from_user.id, topic['topic_id'], int(message.text))
         await state.update_data(pic_url=card.url, pic_description=card.description, pic_num=card.position)

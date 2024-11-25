@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-import logging
 import os
 
 from aiogram import Bot, Dispatcher
@@ -8,6 +7,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums.parse_mode import ParseMode
 from dotenv import load_dotenv
 
+from note_bot import log
 from note_bot.utils.commands import set_commands
 from note_bot.handlers.user_direct import user_direct_router
 from note_bot.handlers.admin_direct import admin_direct_router
@@ -23,7 +23,7 @@ parser.add_argument('--freq',
 
 API_TOKEN = os.getenv('TOKEN')
 
-logging.basicConfig(level=logging.INFO)
+log.setup_logger()
 bot: Bot = Bot(token=API_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp: Dispatcher = Dispatcher()
 dp.include_routers(admin_direct_router, user_direct_router)

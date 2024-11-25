@@ -8,7 +8,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import ReplyKeyboardRemove
 from dotenv import load_dotenv
 
-from note_bot.exceptions import RoundToFiveError
+from note_bot.exceptions import RoundToFiveException
 from note_bot.filters.check_admin import IsAdmin
 from note_bot.keyboards.topic_choose_kbds import (
     choose_topic_kbd,
@@ -56,8 +56,16 @@ async def cmd_start(message: types.Message, state: FSMContext):
         )
     else:
         await message.answer(
-            "Вас приветствует наш самый скромный бот\n"
-            "Для начала напишите как вас зовут",
+            f"<b>Привет! Это Оля Капрас и мой уютный чат-бот для размышлений и записей.</b> \n\n"
+            f"Я знаю, как сложно иногда поддерживать регулярность, но ведь писать — это так здорово, "
+            f"чтобы разобраться в себе и исследовать важные темы глубже. Поэтому этот бот здесь, "
+            f"чтобы немного облегчить путь и сделать его интереснее. \n\n"
+            f"<b>Что бот умеет:</b>\n\n"
+            f"- В течение 30 дней присылает вопрос для записей на выбранную тему."
+            f"- Напоминает писать в удобное время (время рассылки можно настроить)."
+            f"- Рассказывает о ближайших мероприятиях и помогает записаться.\n\n"
+            f"Но сначала у меня есть пара вопросов, чтобы сделать всё немного более личным.\n\n"
+            f"И первый из них — как вас зовут? :)",
             reply_markup=ReplyKeyboardRemove()
         )
         await state.set_state(Registration.name)
@@ -67,11 +75,15 @@ async def cmd_start(message: types.Message, state: FSMContext):
 @user_direct_router.message(F.text.lower() == "прочитать описание")
 async def cmd_help(message: types.Message):
     await message.answer(
-        "НАПИСАТЬ СООБЩЕНИЕ, В КОТОРОМ БУДЕМ РАССКАЗЫВАТЬ КАК И ЧТО УМЕЕТ БОТ!\n\n"
-        "Приветствуем вас тут вы можете подписаться на тему, получать каждый день картнки, описания и писать по "
-        "ним вдохновленные в вас тексты. Изменить время, в которое вам будет приходить сообщение можно "
-        "в настройках\n"
-        "Так же вы можете записаться на мероприятие...",
+        "Что умеет бот?\n\n"
+        "- Помогает получать рассылку «Вопрос дня» — каждый день вдохновляющий вопрос для размышлений и записей.\n"
+        "- Позволяет выбрать тему в «Каталоге тем» и изменить ее при желании.\n"
+        "- Настраивает удобное время для получения рассылки.\n"
+        "- Сообщает о ближайших мероприятиях и даёт возможность записаться.\n\n"
+        "Кнопки:\n\n"
+        "Вопрос дня — выбрать тему через «Каталог тем» или изменить настройки рассылки через «Настройки».\n"
+        "Мероприятия — узнать о предстоящих событиях.\n\n"
+        "Если есть вопросы, пишите: @olyakapras",
         reply_markup=menu_kbd
     )
 
@@ -81,8 +93,7 @@ async def register_q1(message: types.Message, state: FSMContext):
     await state.update_data(name=message.text)
 
     await message.answer(
-        f"Запишем вас как {message.text}\n\n"
-        f"А теперь скажите, как часто вы пишете что-нибудь для себя"
+        f"Какая тема волнует вас больше всего? "
     )
 
     await state.set_state(Registration.question_1)
@@ -93,7 +104,7 @@ async def register_q2(message: types.Message, state: FSMContext):
     await state.update_data(q1=message.text)
 
     await message.answer(
-        f"Ваше любимое произведение?"
+        f"Чем для вас важны записи?"
     )
 
     await state.set_state(Registration.question_2)
@@ -106,8 +117,10 @@ async def register_name(message: types.Message, state: FSMContext):
     register_user(message.from_user.id)
     register_answers(message.from_user.id, message.from_user.username, data['name'], data['q1'], data['q2'])
     await message.answer(
-        "Благодарим за регистрацию\n\n"
-        "Подробнее о функционале бота можете прочитать нажав на кнопку \"Прочитать описание\" либо по коменде /help",
+        f"<b>Спасибо за ответы!</b>\n\n"
+        f"Они помогут в развитии бота. Теперь можно выбрать тему, настроить время и начать путешествие в мир записей."
+        f"Если хотите узнать подробнее о том, что умеет бот, нажми кнопку «Прочитать описание» или введи команду /help "
+        f"😊",
         reply_markup=start_kbd
     )
     await state.clear()
@@ -116,7 +129,7 @@ async def register_name(message: types.Message, state: FSMContext):
 '''------------------------------------------ВЫБОР ТЕМЫ------------------------------------------------------'''
 
 
-@user_direct_router.message(StateFilter(None), F.text.lower() == "выбор темы")
+@user_direct_router.message(StateFilter(None), F.text.lower() == "выбери тему и настрой рассылку")
 @user_direct_router.message(StateFilter(TopicChoose.catalogue), F.text.lower() == "назад")
 @user_direct_router.message(StateFilter(TopicChoose.settings), F.text.lower() == "назад")
 async def choose_topic(message: types.Message, state: FSMContext):
@@ -175,15 +188,17 @@ async def subscribe(message: types.Message, state: FSMContext):
     change_user_subscription(message.chat.id, data['chosen_topic_id'])
     if 'time' not in data:
         await message.answer(
-            f"Вы подписались на тему <b>{data['topic_title']}</b>\n\n"
+            f"Вы подписались на тему <i>{data['topic_title']}</i>\n\n"
             "В течение нескольких минут вам придет карточка.\n"
-            "В дальнейшем будет приходить в это же время. Изменить время получения карточки можно в настройках"
+            "Изменить время получения карточки можно так:\n"
+            "Главное меню → Вопрос дня → Настройки"
         )
     else:
         await message.answer(
-            f"Вы подписались на тему <b>{data['topic_title']}</b>\n\n"
-            f"Карточка вам придет в {data['time']} МСК\n"
-            "Изменить время получения карточки можно в настройках"
+            f"Вы подписались на тему <i>{data['topic_title']}</i>\n"
+            f"Следующий вопрос придет вам в {data['time']} МСК\n\n"
+            "Изменить время получения карточки можно так:\n"
+            "Главное меню → Вопрос дня → Настройки"
         )
     await cancel(message, state)
 
@@ -200,19 +215,19 @@ async def ask_if_really_wants(message: types.Message, state: FSMContext):
     await state.set_state(TopicChoose.change_topic)
 
 
-@user_direct_router.message(StateFilter(TopicChoose.menu), F.text.lower() == "настройки")
+@user_direct_router.message(StateFilter(TopicChoose.menu), F.text.lower() == "настрой рассылку")
 async def settings_menu(message: types.Message, state: FSMContext):
     await message.answer(
-        "Настройки",
+        "Настройки:",
         reply_markup=settings_kbd)
     await state.set_state(TopicChoose.settings)
 
 
-@user_direct_router.message(StateFilter(TopicChoose.settings), F.text.lower() == "изменить время получения картинки")
+@user_direct_router.message(StateFilter(TopicChoose.settings), F.text.lower() == "выбрать время рассылки")
 async def ask_time(message: types.Message, state: FSMContext):
     await message.answer(
-        "Напишите время (МСК), в которое вы бы хотели получать рассылку карточек,"
-        "округленное до 5 минут в формате чч:мм\n\n"
+        "Напишите время в формате чч:мм (по Москве), округляя до ближайших 5 минут, когда хочешь получать рассылку.\n\n"
+        "Например: 9:00\n\n"
         "Для выхода напишите \"Назад\"",
         reply_markup=ReplyKeyboardRemove())
     await state.set_state(TopicChoose.ask_time)
@@ -228,10 +243,10 @@ async def change_time(message: types.Message, state: FSMContext):
     try:
         new_time = datetime.strptime(message.text, '%H:%M')
         if new_time.minute % 5 != 0:
-            raise RoundToFiveError
+            raise RoundToFiveException
     except ValueError:
         await message.answer("Неверный формат! \nНапишите время округленное до 5 минут в формате ЧЧ:ММ")
-    except RoundToFiveError:
+    except RoundToFiveException:
         await message.answer("Неверный формат! \nОкруглите минуты до 5!")
     else:
         change_subscription_time(message.from_user.id, new_time)
@@ -242,12 +257,13 @@ async def change_time(message: types.Message, state: FSMContext):
         await state.set_state(TopicChoose.settings)
 
 
-@user_direct_router.message(StateFilter(TopicChoose.settings), F.text.lower() == "приостановить подписку")
+@user_direct_router.message(StateFilter(TopicChoose.settings), F.text.lower() == "остановить рассылку")
 async def pause_subscription(message: types.Message, state: FSMContext):
     if cancel_subscription(message.from_user.id):
         await message.answer(
-            "Ваша текущая подписка приостановлена\n"
-            "Для возобновления подпишитесь на тему через каталог тем")
+            "Подписка на тему приостановлена.\n\n"
+            "Можете выбрать новую тему через Каталог тем\n\n"
+            )
     else:
         await message.answer("У вас нет активных подписок")
     await cancel(message, state)
@@ -261,7 +277,9 @@ async def pause_subscription(message: types.Message, state: FSMContext):
 async def events_list(message: types.Message, state: FSMContext):
     events_number, events_kbd = make_event_catalogue()
     if events_number == 0:
-        await message.answer("В ближайшее время мероприятий не запланировано")
+        await message.answer(
+            "Мероприятия пока не запланированы, я обязательно сделаю анонс, когда появится что-то новое!"
+        )
     else:
         await message.answer(
             "Вот грядущие мероприятия:",

@@ -5,7 +5,7 @@ from note_bot.models import create_topic_list
 menu_kbd = ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="Мероприятия")],
-            [KeyboardButton(text="Выбор темы")]
+            [KeyboardButton(text="Выбери тему и настрой рассылку")]
         ],
         resize_keyboard=True
     )
@@ -13,7 +13,7 @@ menu_kbd = ReplyKeyboardMarkup(
 choose_topic_kbd = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="Каталог тем")],
-        [KeyboardButton(text="Настройки")],
+        [KeyboardButton(text="Настрой рассылку")],
         [KeyboardButton(text="Главное меню")]
     ],
     resize_keyboard=True
@@ -57,8 +57,8 @@ last_check_kbd = ReplyKeyboardMarkup(
 
 settings_kbd = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="Изменить время получения картинки")],
-        [KeyboardButton(text="Приостановить подписку")],
+        [KeyboardButton(text="Выбрать время рассылки")],
+        [KeyboardButton(text="Остановить рассылку")],
         [KeyboardButton(text="Назад")]
     ],
     resize_keyboard=True

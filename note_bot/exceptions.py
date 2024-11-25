@@ -1,10 +1,6 @@
-class Error(Exception):
+class RoundToFiveException(Exception):
     pass
 
 
-class RoundToFiveError(Error):
-    pass
-
-
-class WrongLastNumber(Error):
+class WrongLastNumber(Exception):
     pass

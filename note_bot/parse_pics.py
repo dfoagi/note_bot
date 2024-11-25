@@ -5,6 +5,7 @@ from note_bot.models import add_card, add_topic, get_topics_ids
 def parse_topics():
     have = get_topics_ids()
     print(have)
+    # todo: изменить бекслеш на слеш для линукса - там путь через обычный слеш
     for root, dirs, files in os.walk("static"):
         if root == 'static' or int(root.split('\\')[-1]) in have:
             if root != 'static':
