@@ -1,6 +1,6 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-from note_bot.models import create_topic_list
+from note_bot.models import create_active_topic_list
 
 menu_kbd = ReplyKeyboardMarkup(
         keyboard=[
@@ -22,7 +22,7 @@ choose_topic_kbd = ReplyKeyboardMarkup(
 
 # todo: подумать, точно ли нужно парсить темы каждый раз или сделать это при добавлении новой темы / забить
 def make_catalogue():
-    ctlg = [[KeyboardButton(text=topic)] for topic in create_topic_list()]
+    ctlg = [[KeyboardButton(text=topic)] for topic in create_active_topic_list()]
     ctlg.append([KeyboardButton(text="Назад")])
     catalogue_kbd = ReplyKeyboardMarkup(
         keyboard=ctlg,

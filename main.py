@@ -1,19 +1,18 @@
 import argparse
 import asyncio
-import os
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums.parse_mode import ParseMode
-from dotenv import load_dotenv
 
+from config import BOT_TOKEN
 from note_bot import log
 from note_bot.utils.commands import set_commands
 from note_bot.handlers.user_direct import user_direct_router
 from note_bot.handlers.admin_direct import admin_direct_router
 from note_bot.apsched.job_scheduler import scheduler_start
 
-load_dotenv()
+
 parser = argparse.ArgumentParser(prog='note_self_bot', description='Telegram bot that will allow users to '
                                                                    'get cards and book events')
 parser.add_argument('--freq',
@@ -21,10 +20,8 @@ parser.add_argument('--freq',
                     default=5,
                     help='The frequency with which the dispatch will be sent')
 
-API_TOKEN = os.getenv('TOKEN')
-
 log.setup_logger()
-bot: Bot = Bot(token=API_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+bot: Bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp: Dispatcher = Dispatcher()
 dp.include_routers(admin_direct_router, user_direct_router)
 

@@ -3,7 +3,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 admin_main_menu_kbd = ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text="Мероприятия")],
-            [KeyboardButton(text="Выбор темы")],
+            [KeyboardButton(text="Выбери тему и настрой рассылку")],
             [KeyboardButton(text="Админская панель")]
         ],
         resize_keyboard=True

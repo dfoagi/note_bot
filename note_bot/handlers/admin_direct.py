@@ -1,5 +1,5 @@
 from aiogram import types, F, Router
-from aiogram.filters import StateFilter, command
+from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -13,18 +13,12 @@ from note_bot.keyboards.adm_kbds import (
     choose_type_kbd,
     save_event_kbd,
     save_announcement_kbd,
-    card_check,
-    admin_main_menu_kbd
+    card_check
 )
 from note_bot.state.user_states import CreateEvent, CreateAnnouncement, ChangeCard
-from note_bot.models import (
-    add_event,
-    send_announcement,
-    create_topic_list,
-    get_topic_by_title,
-    send_chosen_card,
-    change_card
-)
+from note_bot.services.messaging_service import send_announcement, send_chosen_card
+from note_bot.services.topic_service import change_card, get_topic_by_title, create_active_topic_list
+from note_bot.services.event_service import add_event
 from note_bot.parse_pics import parse_topics
 
 admin_direct_router = Router()
@@ -161,7 +155,7 @@ async def add_time(message: types.Message, state: FSMContext):
         await state.set_state(CreateEvent.time)
 
 
-#Считываем время, если все нормально - показываем как будет выглядеть мероприятие
+# Считываем время, если все нормально - показываем как будет выглядеть мероприятие
 @admin_direct_router.message(StateFilter(CreateEvent.time), F.text)
 async def final(message: types.Message, state: FSMContext):
     try:
@@ -196,7 +190,7 @@ async def save_event(message: types.Message, state: FSMContext):
     except SQLAlchemyError:
         await message.answer("Случилась ошибка, напиши Паше")
     else:
-        #todo: Написать функцию, которая будет добавлять в планироващик отправку ссылки на мероприятие всем записавшимся
+        # todo: Написать функцию, которая будет добавлять в планироващик отправку ссылки на мероприятие всем записавшимся
         await message.answer("Мероприятие добавлено", reply_markup=admin_menu_kbd)
         await state.clear()
 
@@ -213,7 +207,7 @@ async def get_topic(message: types.Message, state: FSMContext):
     await state.set_state(ChangeCard.choose_topic)
 
 
-@admin_direct_router.message(StateFilter(ChangeCard.choose_topic), F.text.in_(create_topic_list()))
+@admin_direct_router.message(StateFilter(ChangeCard.choose_topic), F.text.in_(create_active_topic_list()))
 async def get_num(message: types.Message, state: FSMContext):
     topic = get_topic_by_title(message.text)
     await state.update_data(topic_id=topic.id, topic_last_num=topic.last_number)
@@ -290,4 +284,3 @@ async def refresh_topics(message: types.Message):
         await message.answer("Произошла ошибка лезь в логи")
     else:
         await message.answer("Темы, картинки обновлены")
-
