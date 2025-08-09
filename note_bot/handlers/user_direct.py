@@ -6,8 +6,8 @@ from aiogram.filters import StateFilter
 from aiogram.filters.command import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import ReplyKeyboardRemove
-from dotenv import load_dotenv
 
+from config import ADMINS
 from note_bot.exceptions import RoundToFiveException
 from note_bot.filters.check_admin import IsAdmin
 from note_bot.keyboards.topic_choose_kbds import (
@@ -21,30 +21,21 @@ from note_bot.keyboards.topic_choose_kbds import (
 )
 from note_bot.keyboards.user_kbds import start_kbd, make_event_catalogue, event_book_kbd, event_unbook_kbd, back_kbd
 from note_bot.keyboards.adm_kbds import admin_main_menu_kbd
-from note_bot.models import (
-    create_topic_list,
+from note_bot.services.user_service import (
     change_user_subscription,
-    get_topic_by_title,
-    check_booking,
     check_registration,
     register_user,
     register_answers,
     change_subscription_time,
     cancel_subscription,
-    get_event,
-    add_booking,
-    delete_booking,
     get_user_time_topic
 )
+from note_bot.services.event_service import check_booking, get_event, add_booking, delete_booking
+from note_bot.services.topic_service import create_active_topic_list, get_topic_by_title
+from note_bot.services.messaging_service import send_extra_card
 from note_bot.state.user_states import TopicChoose, Registration, BookingEvent
 
-load_dotenv()
-
 user_direct_router = Router()
-admins = os.getenv('ADMINS').split(',')
-
-API_TOKEN = os.getenv('TOKEN')
-bot: Bot = Bot(token=API_TOKEN)
 
 
 @user_direct_router.message(Command("start"))
@@ -75,17 +66,22 @@ async def cmd_start(message: types.Message, state: FSMContext):
 @user_direct_router.message(F.text.lower() == "прочитать описание")
 async def cmd_help(message: types.Message):
     await message.answer(
-        "Что умеет бот?\n\n"
+        "<b>Что умеет бот?</b>\n\n"
         "- Помогает получать рассылку «Вопрос дня» — каждый день вдохновляющий вопрос для размышлений и записей.\n"
         "- Позволяет выбрать тему в «Каталоге тем» и изменить ее при желании.\n"
         "- Настраивает удобное время для получения рассылки.\n"
         "- Сообщает о ближайших мероприятиях и даёт возможность записаться.\n\n"
-        "Кнопки:\n\n"
+        "<b>Кнопки:</b>\n\n"
         "Вопрос дня — выбрать тему через «Каталог тем» или изменить настройки рассылки через «Настройки».\n"
         "Мероприятия — узнать о предстоящих событиях.\n\n"
         "Если есть вопросы, пишите: @olyakapras",
         reply_markup=menu_kbd
     )
+
+
+@user_direct_router.message(Command("get_card"))
+async def cmd_get_card(message: types.Message):
+    await send_extra_card(message.from_user.id)
 
 
 @user_direct_router.message(StateFilter(Registration.name), F.text)
@@ -162,22 +158,23 @@ async def choose_topic(message: types.Message, state: FSMContext):
 
 # todo: можно обойти этот пункт, если написать 'подписаться' руками. Не критично, но можно исправить
 # переход в описание темы с кнопками подписаться и назад
-@user_direct_router.message(StateFilter(TopicChoose.catalogue), F.text.in_(create_topic_list()))
+@user_direct_router.message(StateFilter(TopicChoose.catalogue))
 async def topic1(message: types.Message, state: FSMContext):
-    topic = get_topic_by_title(message.text)
-    data = await state.get_data()
-    kbd = change_kbd if 'cur_topic' in data else topic_kbd
-    if 'cur_topic' in data and data['cur_topic'] == message.text:
-        await message.answer("Вы уже подписаны на эту тему")
-        kbd = back_kbd
+    if message.text in create_active_topic_list():
+        topic = get_topic_by_title(message.text)
+        data = await state.get_data()
+        kbd = change_kbd if 'cur_topic' in data else topic_kbd
+        if 'cur_topic' in data and data['cur_topic'] == message.text:
+            await message.answer("Вы уже подписаны на эту тему")
+            kbd = back_kbd
 
-    await state.update_data(topic_title=message.text)
-    await message.answer(
-        "<b>"+topic.title+"</b>" + "\n" + topic.description,
-        reply_markup=kbd
-    )
-    await state.update_data(chosen_topic_id=topic.id)
-    await state.set_state(TopicChoose.topic)
+        await state.update_data(topic_title=message.text)
+        await message.answer(
+            "<b>"+topic.title+"</b>" + "\n" + topic.description,
+            reply_markup=kbd
+        )
+        await state.update_data(chosen_topic_id=topic.id)
+        await state.set_state(TopicChoose.topic)
 
 
 # Подписаться / Точно подписаться
@@ -309,9 +306,9 @@ async def event_about(message: types.Message, state: FSMContext):
 async def book_event(message: types.Message, state: FSMContext):
     data = await state.get_data()
     add_booking(data['event_id'], message.from_user.id)
-    await bot.send_message(chat_id=273537230,
-                           text=f"Пользователь @{message.from_user.username} "
-                                f"записался на мероприятие {data['event_title']}")
+    await message.bot.send_message(chat_id=273537230,
+                                   text=f"Пользователь @{message.from_user.username} "
+                                        f"записался на мероприятие {data['event_title']}")
     await message.answer("Вы записались на мероприятие")
     await events_list(message, state)
 
@@ -320,9 +317,9 @@ async def book_event(message: types.Message, state: FSMContext):
 async def cancel_booking(message: types.Message, state: FSMContext):
     data = await state.get_data()
     delete_booking(data['event_id'], message.from_user.id)
-    await bot.send_message(chat_id=273537230,
-                           text=f"Пользователь @{message.from_user.username} "
-                                f"отписался от мероприятия {data['event_title']}")
+    await message.bot.send_message(chat_id=273537230,
+                                   text=f"Пользователь @{message.from_user.username} "
+                                        f"отписался от мероприятия {data['event_title']}")
     await message.answer("Вы отписались от мероприятия")
     await cancel(message, state)
 

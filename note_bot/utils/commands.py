@@ -11,5 +11,10 @@ async def set_commands(bot: Bot):
         BotCommand(
             command='help',
             description='Прочитать описание'
-        )]
+        ),
+        BotCommand(
+            command='get_card',
+            description='Получить карточку'
+        )
+    ]
     await bot.set_my_commands(commands, BotCommandScopeAllPrivateChats())
